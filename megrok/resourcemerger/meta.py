@@ -6,7 +6,7 @@ from grokcore import view
 from megrok import resource
 from hurry.resource.core import EXTENSIONS
 from megrok.resource.meta import ResourceLibraryGrokker
-from megrok.resourcemerger.directives import merge
+from megrok.resourcemerger.directives import merge, slim
 from megrok.resourcemerger.merger import merger
 
 PRIORITY = martian.priority.bind().get(ResourceLibraryGrokker)
@@ -41,6 +41,7 @@ class ResourceLibraryMerger(martian.ClassGrokker):
     martian.component(resource.ResourceLibrary)
     martian.priority(PRIORITY - 1)
     martian.directive(merge, default=False)
+    martian.directive(slim, default=False)
     martian.directive(view.path)
 
     def grok(self, name, factory, module_info, **kw):
@@ -48,7 +49,7 @@ class ResourceLibraryMerger(martian.ClassGrokker):
         return super(ResourceLibraryMerger, self).grok(
             name, factory, module_info, **kw)
 
-    def execute(self, factory, config, merge, path, **kw):
+    def execute(self, factory, config, merge, slim, path, **kw):
         if merge:
             library_path = factory.module_info.getResourcePath(path)
             extracted = extract_resources(library_path, factory.depends)
@@ -59,5 +60,5 @@ class ResourceLibraryMerger(martian.ClassGrokker):
                     factory.depends.append(resources[0][1])
                 else:
                     factory.depends.append(
-                        merger(ext, library_path, resources))
+                        merger(ext, library_path, resources, slim=slim))
         return True

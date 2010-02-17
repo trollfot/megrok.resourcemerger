@@ -25,6 +25,7 @@ setup(name='megrok.resourcemerger',
           'setuptools',
           'megrok.resource',
           'martian',
+          'slimmer',
           # -*- Extra requirements: -*-
       ],
       entry_points="""
