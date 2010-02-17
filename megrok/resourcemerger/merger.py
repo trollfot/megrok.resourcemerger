@@ -2,6 +2,7 @@ import os
 import sha
 import shutil
 import tempfile
+from cStringIO import StringIO
 from megrok import resource
 from hurry.resource import ResourceInclusion
 from slimmer import css_slimmer, js_slimmer
@@ -39,19 +40,23 @@ def merger(ext, name, resources, slim=False):
         os.remove(merge_path)
 
     depends = set()
-    destination = open(merge_path, 'wb')
+    tempIO = StringIO()
     for filename, inclusion in resources:
-        shutil.copyfileobj(open(filename, 'rb'), destination)
+        shutil.copyfileobj(open(filename, 'rb'), tempIO)
         depends.update(inclusion.depends)
-    destination.close()
 
-    if slim is True:
-        destination = open(merge_path, 'r+')
-        content = destination.read()
-        slimmed = slimmer(ext, content)
-        destination.seek(0)
-        destination.write(slimmed)
-        destination.truncate(len(slimmed))    
+    merged = open(merge_path, 'wb')
+    try:
+        if slim is True:
+            content = tempIO.getvalue()
+            slimmed = slimmer(ext, content)
+            merged.write(slimmed)
+        else:
+            shutil.copyfileobj(tempIO, merged)
+    except Exception:
+        raise
+    finally:
+        merged.close()
 
     # What shall we do about bottom ?
     return ResourceInclusion(MergeLibrary, merge_name, depends=depends)
